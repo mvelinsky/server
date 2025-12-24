@@ -129,12 +129,13 @@ export const CalendarPage: React.FC = () => {
             .concat(trackersResult.data.timers)
             .sort((a, b) => a.start.toString().localeCompare(b.start.toString()))
             .map((ts) => {
-                const colorKey = ts
-                    .tags!.map((t) => t.key + ':' + t.value)
-                    .sort((a, b) => a.localeCompare(b))
-                    .join(' ');
-                const color = calculateColor(colorKey, ColorMode.Bold, theme.palette.type);
-                const borderColor = calculateColor(colorKey, ColorMode.None, theme.palette.type);
+                const sortedTags = [...ts.tags!]
+                    .sort((a, b) => (a.key + ':' + a.value).localeCompare(b.key + ':' + b.value))
+                    .filter((t) => t.key !== 'd');
+                const firstTag = sortedTags[0];
+                const tagDef = firstTag ? tagsResult.data!.tags!.find((t) => t.key === firstTag.key) : undefined;
+                const color = tagDef?.color || calculateColor('', ColorMode.Bold, theme.palette.type);
+                const borderColor = tagDef?.color || calculateColor('', ColorMode.None, theme.palette.type);
                 return {
                     start: moment(ts.start).toDate(),
                     end: moment(ts.end || currentDate).toDate(),
