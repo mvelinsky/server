@@ -38,6 +38,7 @@ const newEntry = (): Dashboards_dashboards_items => {
     return {
         __typename: 'DashboardEntry',
         title: '',
+        description: '',
         id: EditId,
         entryType: EntryType.PieChart,
         statsSelection: {

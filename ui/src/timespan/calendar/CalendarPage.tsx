@@ -134,8 +134,20 @@ export const CalendarPage: React.FC = () => {
                     .filter((t) => t.key !== 'd');
                 const firstTag = sortedTags[0];
                 const tagDef = firstTag ? tagsResult.data!.tags!.find((t) => t.key === firstTag.key) : undefined;
-                const color = tagDef?.color || calculateColor('', ColorMode.Bold, theme.palette.type);
-                const borderColor = tagDef?.color || calculateColor('', ColorMode.None, theme.palette.type);
+                const color = (tagDef && tagDef.color) || calculateColor('', ColorMode.Bold, theme.palette.type);
+                const borderColor = (tagDef && tagDef.color) || calculateColor('', ColorMode.None, theme.palette.type);
+
+                const tagsWithColors = ts.tags!
+                    .filter((t) => t.key !== 'd')
+                    .map((t) => {
+                        const def = tagsResult.data!.tags!.find((td) => td.key === t.key);
+                        return {
+                            key: t.key,
+                            value: t.value,
+                            color: def ? def.color : calculateColor(t.key, ColorMode.Bold, theme.palette.type),
+                        };
+                    });
+
                 return {
                     start: moment(ts.start).toDate(),
                     end: moment(ts.end || currentDate).toDate(),
@@ -146,7 +158,7 @@ export const CalendarPage: React.FC = () => {
                     id: ts.id,
                     tags: ts.tags!.map(({value, key}) => ({key, value})),
                     title: ts.tags!.map((t) => t.key + ':' + t.value).join(' '),
-                    extendedProps: {ts},
+                    extendedProps: {ts, note: ts.note || '', tagsWithColors},
                     textColor: theme.palette.getContrastText(color),
                     borderColor,
                 };
@@ -359,23 +371,51 @@ const getElementContent = (event: EventApi, stop: () => void): string => {
             end
         )}</a></div>`;
     }
-    const clamp = (amount: number) =>
-        `<span class="ellipsis" title="${event.title}" style="-webkit-line-clamp: ${amount}">${event.title}</span>`;
 
     const running = hasEnd ? `<span style="float: right">${timeRunningCalendar(start, end)}</span>` : '';
     const date = `${start.format('LT')} - ${hasEnd ? end.format('LT') : 'now'} ${running}`;
+
+    const note = event.extendedProps.note || '';
+    const hasNote = note.length > 0;
+    const noteHtml = hasNote ? `<span class="note" style="font-weight: normal; font-size: 0.9em; opacity: 0.9;">${note}</span>` : '';
+
+    const tagsWithColors = event.extendedProps.tagsWithColors || [];
+    const tagsHtml = tagsWithColors.length > 0
+        ? tagsWithColors.map((t: {key: string; value: string; color: string}) =>
+            `<span style="
+                display: inline-block;
+                padding: 1px 6px;
+                margin: 1px 2px;
+                background: rgba(255, 255, 255, 0.25);
+                font-size: 0.85em;
+                font-weight: 500;
+                border: 1px solid rgba(255, 255, 255, 1);
+            ">${t.key}:${t.value}</span>`
+        ).join('')
+        : event.title;
+
     if (lines < 2) {
-        return event.title
-            ? `<span class="ellipsis-single" title="${event.title}">${event.title}</span>${stopButton}`
+        if (hasNote) {
+            return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`;
+        }
+        return tagsHtml
+            ? `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`
             : `${date}${stopButton}`;
     }
     if (lines === 2) {
         if (hasEnd) {
-            return `${date}<span class="ellipsis-single" title="${event.title}">${event.title}</span>${stopButton}`;
+            if (hasNote) {
+                return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${noteHtml}${stopButton}`;
+            }
+            return `${date}<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`;
         } else {
-            return `${clamp(2)}${stopButton}`;
+            return `<span class="ellipsis-single">${tagsHtml}</span>${stopButton}`;
         }
     }
 
-    return `${date}<br/>${clamp(lines - 1)}${stopButton}`;
+    if (hasNote && lines >= 3) {
+        return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span><br/>${noteHtml}${stopButton}`;
+    }
+
+    return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span>${stopButton}`;
 };

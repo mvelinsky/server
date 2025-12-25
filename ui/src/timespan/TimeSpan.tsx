@@ -97,7 +97,6 @@ export const TimeSpan: React.FC<TimeSpanProps> = React.memo(
         addTagsToTracker,
     }) => {
         const styles = useStyles();
-        const [showNotes, toggleShowingNotes] = React.useState(initialNote !== '');
         const note = React.useRef<{value: string; handle?: number}>({value: initialNote});
 
         const [selectedEntries, setSelectedEntries] = React.useState<TagSelectorEntry[]>(initialTags);
@@ -333,30 +332,21 @@ export const TimeSpan: React.FC<TimeSpanProps> = React.memo(
                         <MenuItem
                             onClick={() => {
                                 setOpenMenu(null);
-                                toggleShowingNotes(!showNotes);
-                            }}>
-                            Show Notes
-                        </MenuItem>
-                        <MenuItem
-                            onClick={() => {
-                                setOpenMenu(null);
                                 removeTimeSpan({variables: {id}}).then(() => deleted());
                             }}>
                             Delete
                         </MenuItem>
                     </Menu>
                 </div>
-                {showNotes ? (
-                    <div>
-                        <TextField
-                            label="Note"
-                            fullWidth
-                            multiline
-                            defaultValue={initialNote}
-                            onChange={(e) => updateNote(e.target.value)}
-                        />
-                    </div>
-                ) : null}
+                <div>
+                    <TextField
+                        label="Note"
+                        fullWidth
+                        multiline
+                        defaultValue={initialNote}
+                        onChange={(e) => updateNote(e.target.value)}
+                    />
+                </div>
             </Paper>
         );
     }
