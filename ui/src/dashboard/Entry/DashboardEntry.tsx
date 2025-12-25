@@ -30,10 +30,15 @@ export const DashboardEntry: React.FC<DashboardEntryProps> = React.forwardRef<{}
             <Typography style={{lineHeight: '20px', paddingTop: 15}} component="h4" align="center" variant="h6">
                 {entry.title}
             </Typography>
-            <Typography style={{position: 'absolute', right: 10, top: 35, fontSize: 10, color: 'gray'}}>
+            {entry.description && (
+                <Typography style={{padding: '0 15px', fontSize: 12, color: 'gray'}} align="center">
+                    {entry.description}
+                </Typography>
+            )}
+            <Typography style={{position: 'absolute', right: 10, top: entry.description ? 55 : 35, fontSize: 10, color: 'gray'}}>
                 {range.from} to {range.to}
             </Typography>
-            <div style={{height: 'calc(100% - 35px)'}}>
+            <div style={{height: `calc(100% - ${entry.description ? 55 : 35}px)`}}>
                 <SpecificDashboardEntry range={range} entry={entry} />
             </div>
         </Paper>

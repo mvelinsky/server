@@ -17,6 +17,7 @@ export const Dashboards = gql`
             items {
                 id
                 title
+                description
                 total
                 entryType
                 statsSelection {
@@ -95,10 +96,11 @@ export const UpdateDashboardEntry = gql`
         $entryId: Int!
         $entryType: EntryType!
         $title: String!
+        $description: String
         $total: Boolean!
         $stats: InputStatsSelection!
     ) {
-        updateDashboardEntry(entryId: $entryId, entryType: $entryType, title: $title, total: $total, stats: $stats) {
+        updateDashboardEntry(entryId: $entryId, entryType: $entryType, title: $title, description: $description, total: $total, stats: $stats) {
             id
         }
     }
@@ -108,6 +110,7 @@ export const AddDashboardEntry = gql`
         $dashboardId: Int!
         $entryType: EntryType!
         $title: String!
+        $description: String
         $total: Boolean!
         $stats: InputStatsSelection!
         $pos: InputResponsiveDashboardEntryPos
@@ -116,6 +119,7 @@ export const AddDashboardEntry = gql`
             dashboardId: $dashboardId
             entryType: $entryType
             title: $title
+            description: $description
             total: $total
             stats: $stats
             pos: $pos

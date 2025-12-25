@@ -63,6 +63,19 @@ export const DashboardEntryForm: React.FC<EditPopupProps> = ({entry, onChange: s
                 }}
                 fullWidth
             />
+            <TextField
+                label={'Description'}
+                value={entry.description || ''}
+                disabled={disabled}
+                onChange={(e) => {
+                    entry.description = e.target.value;
+                    setEntry(entry);
+                }}
+                fullWidth
+                margin="normal"
+                multiline
+                rows={3}
+            />
             <FormControl margin={'normal'} fullWidth>
                 <InputLabel>Type</InputLabel>
                 <Select

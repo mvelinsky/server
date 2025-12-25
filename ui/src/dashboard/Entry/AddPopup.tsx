@@ -78,6 +78,7 @@ export const AddPopup: React.FC<EditPopupProps> = ({
                                             dashboardId,
                                             entryType: entry.entryType,
                                             title: entry.title,
+                                            description: entry.description,
                                             total: entry.total,
                                             stats: {
                                                 tags: entry.statsSelection.tags,
