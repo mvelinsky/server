@@ -6,6 +6,8 @@ WORKDIR /app
 COPY . .
 
 ENV GO111MODULE=on
+ENV NODE_OPTIONS=--openssl-legacy-provider
+
 RUN make download-tools install generate build-bin-local
 
 FROM scratch
