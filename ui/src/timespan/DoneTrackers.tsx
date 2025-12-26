@@ -7,7 +7,8 @@ import {Tags} from '../gql/__generated__/Tags';
 import useInterval from '@rooks/use-interval';
 import moment from 'moment';
 import {TimeSpans, TimeSpansVariables} from '../gql/__generated__/TimeSpans';
-import {Typography} from '@material-ui/core';
+import {Typography, IconButton, Tooltip} from '@material-ui/core';
+import {GetApp} from '@material-ui/icons';
 import {GroupedTimeSpanProps, toGroupedTimeSpanProps} from './timespanutils';
 import {TagSelectorEntry} from '../tag/tagSelectorEntry';
 import ReactInfinite from 'react-infinite';
@@ -136,11 +137,53 @@ const DatedTimeSpans: React.FC<{
             setHeight((old) => ({...old, [name]: currentHeight}));
         }
     }, [ref, name, setHeight, height]);
+
+    const exportToMarkdown = () => {
+        // Extract the date from the name (format: "Monday, January 1, 2024 (today)")
+        const dateMatch = name.match(/([^,(]+)/);
+        const dateStr = dateMatch ? dateMatch[1].trim() : name;
+
+        let markdown = `# ${dateStr}\n\n`;
+
+        timeSpans.forEach((ts) => {
+            const tags = ts.initialTags.map((t) => `${t.tag.key}:${t.value}`).join(', ');
+            const description = ts.note || '';
+
+            const start = ts.range.from;
+            const end = ts.range.to || moment();
+            const duration = moment.duration(end.diff(start));
+            const durationStr = duration.asMinutes() < 60
+                ? `${duration.minutes()}m`
+                : `${Math.floor(duration.asHours())}h ${duration.minutes()}m`;
+            const startTime = start.format('LT');
+
+            markdown += `${tags}: ${description}\n`;
+            markdown += ` - ${durationStr} (${startTime})\n\n`;
+        });
+
+        const blob = new Blob([markdown], {type: 'text/markdown'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${dateStr.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
     return (
         <div key={name} ref={(r) => (ref.current = r)}>
-            <Typography key={name} align="center" variant={'h5'}>
-                {name}
-            </Typography>
+            <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px'}}>
+                <Typography key={name} align="center" variant={'h5'} style={{margin: 0}}>
+                    {name}
+                </Typography>
+                <Tooltip title="Export to Markdown">
+                    <IconButton size="small" onClick={exportToMarkdown}>
+                        <GetApp fontSize="small" />
+                    </IconButton>
+                </Tooltip>
+            </div>
             {timeSpans.map((timeSpanProps) => (
                 <TimeSpan key={timeSpanProps.id} {...timeSpanProps} addTagsToTracker={addTagsToTracker} />
             ))}
