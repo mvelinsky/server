@@ -19,6 +19,7 @@ import {DashboardsPage} from './dashboard/DashboardsPage';
 import {TagPage} from './tag/TagPage';
 import {SettingsPage} from './setting/SettingsPage';
 import {CalendarPage} from './timespan/calendar/CalendarPage';
+import {DailyTrackerPage} from './dailytracker/DailyTrackerPage';
 
 export const Router = () => {
     const {loading, error, data, refetch} = useQuery<CurrentUser>(gqlUser.CurrentUser);
@@ -44,6 +45,7 @@ export const Router = () => {
                 <Route exact path="/user/settings" component={SettingsPage} />
                 <Route exact path="/user/devices" component={DevicesPage} />
                 <Route exact path="/user/tags" component={TagPage} />
+                <Route exact path="/user/trackers" component={DailyTrackerPage} />
                 {admin ? <Route exact path="/admin/users" component={UsersPage} /> : null}
                 <Route exact path="/" render={() => <Redirect to="/timesheet/list" />} />
             </Page>

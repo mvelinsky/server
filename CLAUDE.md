@@ -56,7 +56,7 @@ The frontend runs on port **3000** and proxies API calls to port **3030**.
 export PATH=$PATH:$(go env GOPATH)/bin
 gqlgen
 
-# Build frontend
+# Build frontend (important to run in ui directory, not in repository root)
 cd ui
 NODE_OPTIONS=--openssl-legacy-provider yarn build
 

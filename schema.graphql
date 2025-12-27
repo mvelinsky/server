@@ -45,6 +45,12 @@ type RootMutation {
     removeDashboardEntry(id: Int!): DashboardEntry! @hasRole(role: USER)
 
     setUserSettings(settings: InputUserSettings!): UserSettings! @hasRole(role: USER)
+
+    createDailyTracker(name: String!, type: TrackerType!, chainable: Boolean!, color: String!): DailyTracker @hasRole(role: USER)
+    updateDailyTracker(id: Int!, name: String, type: TrackerType, chainable: Boolean, color: String): DailyTracker @hasRole(role: USER)
+    removeDailyTracker(id: Int!): DailyTracker @hasRole(role: USER)
+    setDailyTrackerValue(trackerId: Int!, date: String!, textValue: String, numberValue: Float, boolValue: Boolean): DailyTrackerValue @hasRole(role: USER)
+    removeDailyTrackerValue(id: Int!): DailyTrackerValue @hasRole(role: USER)
 }
 
 type RootQuery {
@@ -62,6 +68,8 @@ type RootQuery {
     version: Version!
     dashboards: [Dashboard!] @hasRole(role: USER)
     userSettings: UserSettings!
+    dailyTrackers: [DailyTracker!] @hasRole(role: USER)
+    dailyTrackerValues(fromInclusive: String!, toInclusive: String!): [DailyTrackerValue!] @hasRole(role: USER)
 }
 
 input InputUserSettings {
@@ -297,4 +305,28 @@ enum DashboardSize {
 
 enum EntryType {
     PieChart, BarChart, StackedBarChart, LineChart, VerticalTable, HorizontalTable
+}
+
+enum TrackerType {
+    Text, Number, Boolean
+}
+
+type DailyTracker {
+    id: Int!
+    name: String!
+    type: TrackerType!
+    chainable: Boolean!
+    color: String!
+    streakDays: Int!
+    milestoneBadges: [String!]!
+}
+
+type DailyTrackerValue {
+    id: Int!
+    trackerId: Int!
+    tracker: DailyTracker!
+    date: String!
+    textValue: String
+    numberValue: Float
+    boolValue: Boolean
 }

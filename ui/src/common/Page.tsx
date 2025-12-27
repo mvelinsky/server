@@ -18,6 +18,7 @@ import LabelIcon from '@material-ui/icons/Label';
 import DashboardManageIcon from '@material-ui/icons/ListAlt';
 import TimeLineIcon from '@material-ui/icons/Timeline';
 import CalendarIcon from '@material-ui/icons/CalendarToday';
+import TrackChangesIcon from '@material-ui/icons/TrackChanges';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import {ListSubheader, Menu} from '@material-ui/core';
@@ -175,6 +176,12 @@ export const Page: React.FC = ({children}) => {
                     </ListItemIcon>
                     <ListItemText primary="Tags" />
                 </ListItem>
+                <ListItem button component={routerLink('/user/trackers')}>
+                    <ListItemIcon>
+                        <TrackChangesIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Daily Trackers" />
+                </ListItem>
                 <ListItem button component={routerLink('/user/devices')}>
                     <ListItemIcon>
                         <DevicesIcon />
@@ -233,6 +240,9 @@ export const Page: React.FC = ({children}) => {
                             </Route>
                             <Route exact path="/user/tags">
                                 User / Tags
+                            </Route>
+                            <Route exact path="/user/trackers">
+                                User / Daily Trackers
                             </Route>
                             <Route exact path="/admin/users">
                                 Admin / Users

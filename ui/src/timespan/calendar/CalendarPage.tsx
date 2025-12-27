@@ -1,7 +1,10 @@
 import * as React from 'react';
-import {Paper, useTheme, Select, MenuItem, FormControl, InputLabel, Chip, Box} from '@material-ui/core';
+import {Paper, useTheme, Select, MenuItem, FormControl, InputLabel, Chip, Box, IconButton, Collapse} from '@material-ui/core';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import moment from 'moment';
 import {useApolloClient, useMutation, useQuery} from '@apollo/react-hooks';
+import {DailyTrackerTable} from '../../dailytracker/DailyTrackerTable';
 import {TimeSpans_timeSpans_timeSpans} from '../../gql/__generated__/TimeSpans';
 import * as gqlTimeSpan from '../../gql/timeSpan';
 import {Trackers} from '../../gql/__generated__/Trackers';
@@ -78,6 +81,8 @@ export const CalendarPage: React.FC = () => {
     });
     const [updateTimeSpanMutation] = useMutation<UpdateTimeSpan, UpdateTimeSpanVariables>(gqlTimeSpan.UpdateTimeSpan);
     const [currentDate, setCurrentDate] = React.useState(moment());
+    const [trackersCollapsed, setTrackersCollapsed] = React.useState(false);
+
     const [stopTimer] = useMutation<StopTimer, StopTimerVariables>(gqlTimeSpan.StopTimer, {
         update: (cache, {data}) => {
             if (!data || !data.stopTimeSpan) {
@@ -231,6 +236,17 @@ export const CalendarPage: React.FC = () => {
 
     return (
         <Paper style={{padding: 10, bottom: 10, top: 80, position: 'absolute'}} color="red">
+            <Box style={{marginBottom: 10}}>
+                <Box display="flex" alignItems="center" style={{cursor: 'pointer'}} onClick={() => setTrackersCollapsed(!trackersCollapsed)}>
+                    <h3 style={{margin: 0, flexGrow: 1}}>Daily Trackers</h3>
+                    <IconButton size="small">
+                        {trackersCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                    </IconButton>
+                </Box>
+                <Collapse in={!trackersCollapsed}>
+                    <DailyTrackerTable dateRange={{start: moment().startOf('week'), end: moment().endOf('week')}} />
+                </Collapse>
+            </Box>
             {usersResult.data && usersResult.data.currentUser && usersResult.data.currentUser.admin && (
                 <Box mb={2} display="flex" alignItems="center">
                     <FormControl variant="outlined" style={{minWidth: 200}}>

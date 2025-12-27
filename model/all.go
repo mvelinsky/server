@@ -12,5 +12,7 @@ func All() []interface{} {
 		new(Dashboard),
 		new(DashboardEntry),
 		new(DashboardRange),
+		new(DailyTracker),
+		new(DailyTrackerValue),
 	}
 }

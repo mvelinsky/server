@@ -13,6 +13,7 @@ import {GroupedTimeSpanProps, toGroupedTimeSpanProps} from './timespanutils';
 import {TagSelectorEntry} from '../tag/tagSelectorEntry';
 import ReactInfinite from 'react-infinite';
 import {isSameDate} from '../utils/time';
+import {DailyTrackersList} from '../dailytracker/DailyTrackersList';
 
 interface DoneTrackersProps {
     addTagsToTracker?: (entries: TagSelectorEntry[]) => void;
@@ -131,6 +132,13 @@ const DatedTimeSpans: React.FC<{
     timeSpans: TimeSpanProps[];
 } & DoneTrackersProps> = ({name, timeSpans, addTagsToTracker, setHeight, height}) => {
     const ref = React.useRef<HTMLDivElement | null>();
+
+    // Parse date from name (format: "Monday, January 1, 2024 (today)")
+    const date = React.useMemo(() => {
+        const baseName = name.replace(/\s*\((today|yesterday)\)\s*$/, '').trim();
+        return moment(baseName, 'dddd, LL');
+    }, [name]);
+
     React.useEffect(() => {
         const currentHeight = ref.current && ref.current.getBoundingClientRect().height;
         if (currentHeight != null && currentHeight !== height) {
@@ -145,6 +153,24 @@ const DatedTimeSpans: React.FC<{
 
         let markdown = `# ${dateStr}\n\n`;
 
+        // Add daily trackers section
+        const trackersData = document.querySelector(`[data-trackers-date="${date.format('YYYY-MM-DD')}"]`);
+        if (trackersData) {
+            const trackerItems = trackersData.querySelectorAll('[data-tracker-item]');
+            if (trackerItems.length > 0) {
+                markdown += `## Daily Trackers\n\n`;
+                trackerItems.forEach((item) => {
+                    const nameEl = item.querySelector('[data-tracker-name]');
+                    const valueEl = item.querySelector('[data-tracker-value]');
+                    const name = (nameEl && nameEl.textContent) || '';
+                    const value = (valueEl && valueEl.textContent) || '';
+                    markdown += `- **${name}**: ${value}\n`;
+                });
+                markdown += `\n`;
+            }
+        }
+
+        markdown += `\n## Timespans\n\n`;
         timeSpans.forEach((ts) => {
             const tags = ts.initialTags.map((t) => `${t.tag.key}:${t.value}`).join(', ');
             const description = ts.note || '';
@@ -184,6 +210,7 @@ const DatedTimeSpans: React.FC<{
                     </IconButton>
                 </Tooltip>
             </div>
+            <DailyTrackersList date={date} />
             {timeSpans.map((timeSpanProps) => (
                 <TimeSpan key={timeSpanProps.id} {...timeSpanProps} addTagsToTracker={addTagsToTracker} />
             ))}

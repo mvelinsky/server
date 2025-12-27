@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/traggo/server/dashboard"
+	"github.com/traggo/server/dailytracker"
 	"github.com/traggo/server/setting"
 
 	"github.com/jinzhu/copier"
@@ -41,7 +42,10 @@ func NewResolver(db *gorm.DB, passStrength int, version model.Version) gqlschema
 			DB: db,
 		},
 		ResolverForDashboard: dashboard.NewResolverForDashboard(db),
-		version:              version,
+		ResolverForDailyTracker: dailytracker.ResolverForDailyTracker{
+			DB: db,
+		},
+		version: version,
 	}
 }
 
@@ -54,6 +58,7 @@ type resolver struct {
 	version model.Version
 	setting.ResolverForSettings
 	dashboard.ResolverForDashboard
+	dailytracker.ResolverForDailyTracker
 }
 
 func (r *resolver) RootMutation() gqlschema.RootMutationResolver {
