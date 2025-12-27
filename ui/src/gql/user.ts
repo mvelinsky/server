@@ -38,6 +38,7 @@ export const Users = gql`
         }
         currentUser {
             id
+            admin
         }
     }
 `;

@@ -51,11 +51,11 @@ type RootQuery {
     suggestTag(query: String!): [TagDefinition!] @hasRole(role: USER)
     suggestTagValue(key: String!, query: String!): [String!] @hasRole(role: USER)
     tags: [TagDefinition!] @hasRole(role: USER)
-    users: [User!] @hasRole(role: ADMIN)
+    users: [User!] @hasRole(role: USER)
     currentUser: User
     currentDevice: Device
     devices: [Device!] @hasRole(role: USER)
-    timeSpans(fromInclusive: Time, toInclusive: Time, cursor: InputCursor): PagedTimeSpans! @hasRole(role: USER)
+    timeSpans(fromInclusive: Time, toInclusive: Time, cursor: InputCursor, userId: Int): PagedTimeSpans! @hasRole(role: USER)
     timers: [TimeSpan!] @hasRole(role: USER)
     stats(ranges: [Range!], tags: [String!], excludeTags: [InputTimeSpanTag!], requireTags: [InputTimeSpanTag!]): [RangedStatisticsEntries!] @hasRole(role: USER)
     stats2(now: Time!, stats: InputStatsSelection!): [RangedStatisticsEntries!] @hasRole(role: USER)

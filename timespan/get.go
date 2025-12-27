@@ -10,9 +10,17 @@ import (
 )
 
 // TimeSpans returns all time spans for a user
-func (r *ResolverForTimeSpan) TimeSpans(ctx context.Context, fromInclusive *model.Time, toInclusive *model.Time, cursor *gqlmodel.InputCursor) (*gqlmodel.PagedTimeSpans, error) {
+func (r *ResolverForTimeSpan) TimeSpans(ctx context.Context, fromInclusive *model.Time, toInclusive *model.Time, cursor *gqlmodel.InputCursor, userID *int) (*gqlmodel.PagedTimeSpans, error) {
 	user := auth.GetUser(ctx)
 	cursor = normalize(cursor)
+
+	targetUserID := user.ID
+	if userID != nil {
+		if !user.Admin {
+			return nil, errors.New("only admin can view other users' time spans")
+		}
+		targetUserID = *userID
+	}
 
 	if cursor.StartID == nil {
 		var s model.TimeSpan
@@ -22,7 +30,7 @@ func (r *ResolverForTimeSpan) TimeSpans(ctx context.Context, fromInclusive *mode
 		cursor.StartID = &s.ID
 	}
 
-	call := r.DB.Preload("Tags").Where("user_id = ?", user.ID).Not("end_user_time is NULL").Order("start_user_time DESC").Limit(*cursor.PageSize)
+	call := r.DB.Preload("Tags").Where("user_id = ?", targetUserID).Not("end_user_time is NULL").Order("start_user_time DESC").Limit(*cursor.PageSize)
 	if cursor.Offset != nil && cursor.StartID != nil {
 		call = call.Where("id <= ?", *cursor.StartID).Offset(*cursor.Offset)
 	}

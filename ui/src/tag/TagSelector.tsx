@@ -34,6 +34,7 @@ export interface TagSelectorProps {
     selectedEntries: TagSelectorEntry[];
     dialogOpen?: React.Dispatch<React.SetStateAction<boolean>>;
     onCtrlEnter?: () => void;
+    onTab?: () => void;
     createTags?: boolean;
     allowDuplicateKeys?: boolean;
     onlySelectKeys?: boolean;
@@ -45,6 +46,7 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
     onSelectedEntriesChanged: setSelectedEntries,
     dialogOpen = () => {},
     onCtrlEnter,
+    onTab,
     createTags = true,
     allowDuplicateKeys = false,
     onlySelectKeys = false,
@@ -166,6 +168,10 @@ export const TagSelector: React.FC<TagSelectorProps> = ({
         }
         if (event.key === 'Tab') {
             setOpen(false);
+            if (onTab) {
+                event.preventDefault();
+                onTab();
+            }
         }
     };
 

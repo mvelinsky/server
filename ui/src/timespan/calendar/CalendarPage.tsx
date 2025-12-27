@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Paper, useTheme} from '@material-ui/core';
+import {Paper, useTheme, Select, MenuItem, FormControl, InputLabel, Chip, Box} from '@material-ui/core';
 import moment from 'moment';
 import {useApolloClient, useMutation, useQuery} from '@apollo/react-hooks';
 import {TimeSpans_timeSpans_timeSpans} from '../../gql/__generated__/TimeSpans';
@@ -7,6 +7,8 @@ import * as gqlTimeSpan from '../../gql/timeSpan';
 import {Trackers} from '../../gql/__generated__/Trackers';
 import {Tags} from '../../gql/__generated__/Tags';
 import * as gqlTag from '../../gql/tags';
+import * as gqlUser from '../../gql/user';
+import {Users} from '../../gql/__generated__/Users';
 import FullCalendar from '@fullcalendar/react';
 import {calculateColor, ColorMode} from '../colorutils';
 import '@fullcalendar/core/main.css';
@@ -55,6 +57,8 @@ const StartTimerId = '-1';
 export const CalendarPage: React.FC = () => {
     const apollo = useApolloClient();
     const theme = useTheme();
+    const usersResult = useQuery<Users>(gqlUser.Users);
+    const [selectedUserId, setSelectedUserId] = React.useState<number | undefined>(undefined);
     const timeSpansResult = useQuery<TimeSpansInRange, TimeSpansInRangeVariables>(gqlTimeSpan.TimeSpansInRange, {
         variables: {
             start: moment()
@@ -63,6 +67,7 @@ export const CalendarPage: React.FC = () => {
             end: moment()
                 .endOf('week')
                 .format(),
+            userId: selectedUserId,
         },
         fetchPolicy: 'cache-and-network',
     });
@@ -226,6 +231,38 @@ export const CalendarPage: React.FC = () => {
 
     return (
         <Paper style={{padding: 10, bottom: 10, top: 80, position: 'absolute'}} color="red">
+            {usersResult.data && usersResult.data.currentUser && usersResult.data.currentUser.admin && (
+                <Box mb={2} display="flex" alignItems="center">
+                    <FormControl variant="outlined" style={{minWidth: 200}}>
+                        <InputLabel>View User Calendar</InputLabel>
+                        <Select
+                            value={selectedUserId || ''}
+                            onChange={(e) => setSelectedUserId(e.target.value as number | undefined)}
+                        >
+                            <MenuItem value={undefined}>
+                                <em>All Users / My Calendar</em>
+                            </MenuItem>
+                            {usersResult.data.users && usersResult.data.users.map((user) => (
+                                <MenuItem key={user.id} value={user.id}>
+                                    {user.name} {user.admin && <Chip label="Admin" size="small" style={{marginLeft: 8}} />}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    {selectedUserId && (
+                        <Box ml={2}>
+                            <Chip
+                                label={`Viewing: ${usersResult.data.users && (() => {
+                                    const found = usersResult.data.users.find((u) => u.id === selectedUserId);
+                                    return found && found.name;
+                                })()}`}
+                                onDelete={() => setSelectedUserId(undefined)}
+                                color="primary"
+                            />
+                        </Box>
+                    )}
+                </Box>
+            )}
             <FullCalendarStyling>
                 <FullCalendar
                     defaultView="timeGridWeek"
@@ -329,6 +366,7 @@ export const CalendarPage: React.FC = () => {
                                         data: {...selected.data!, end: currentDate.toDate()},
                                     });
                                 }}
+                                onEnterInNote={() => setSelected({selected: null, data: null})}
                             />
                         </div>
                     </ClickAwayListener>

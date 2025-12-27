@@ -40,6 +40,7 @@ export interface TimeSpanProps {
     continued?: () => void;
     addTagsToTracker?: (tags: TagSelectorEntry[]) => void;
     elevation?: number;
+    onEnterInNote?: () => void;
 }
 
 const useStyles = makeStyles(() => ({
@@ -95,9 +96,11 @@ export const TimeSpan: React.FC<TimeSpanProps> = React.memo(
         continued = () => {},
         elevation = 1,
         addTagsToTracker,
+        onEnterInNote,
     }) => {
         const styles = useStyles();
         const note = React.useRef<{value: string; handle?: number}>({value: initialNote});
+        const noteInputRef = React.useRef<HTMLInputElement>(null);
 
         const [selectedEntries, setSelectedEntries] = React.useState<TagSelectorEntry[]>(initialTags);
         const [openMenu, setOpenMenu] = useStateAndDelegateWithDelayOnChange<null | HTMLElement>(null, (o) =>
@@ -203,6 +206,11 @@ export const TimeSpan: React.FC<TimeSpanProps> = React.memo(
                                         tags: toInputTags(entries),
                                     },
                                 });
+                            }}
+                            onTab={() => {
+                                if (noteInputRef.current) {
+                                    noteInputRef.current.focus();
+                                }
                             }}
                         />
                     </div>
@@ -343,8 +351,15 @@ export const TimeSpan: React.FC<TimeSpanProps> = React.memo(
                         label="Note"
                         fullWidth
                         multiline
+                        inputRef={noteInputRef}
                         defaultValue={initialNote}
                         onChange={(e) => updateNote(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey && onEnterInNote) {
+                                e.preventDefault();
+                                onEnterInNote();
+                            }
+                        }}
                     />
                 </div>
             </Paper>

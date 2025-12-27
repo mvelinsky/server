@@ -17,8 +17,8 @@ export const Trackers = gql`
 `;
 
 export const TimeSpansInRange = gql`
-    query TimeSpansInRange($start: Time!, $end: Time!) {
-        timeSpans(fromInclusive: $start, toInclusive: $end) {
+    query TimeSpansInRange($start: Time!, $end: Time!, $userId: Int) {
+        timeSpans(fromInclusive: $start, toInclusive: $end, userId: $userId) {
             timeSpans {
                 id
                 start
