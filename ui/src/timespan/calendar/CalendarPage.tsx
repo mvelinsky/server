@@ -141,7 +141,7 @@ export const CalendarPage: React.FC = () => {
             .map((ts) => {
                 const sortedTags = [...ts.tags!]
                     .sort((a, b) => (a.key + ':' + a.value).localeCompare(b.key + ':' + b.value))
-                    .filter((t) => t.key !== 'd');
+                    .filter((t) => t.key !== 'd' && !t.key.startsWith('_'));
                 const firstTag = sortedTags[0];
                 const tagDef = firstTag ? tagsResult.data!.tags!.find((t) => t.key === firstTag.key) : undefined;
                 const color = (tagDef && tagDef.color) || calculateColor('', ColorMode.Bold, theme.palette.type);
