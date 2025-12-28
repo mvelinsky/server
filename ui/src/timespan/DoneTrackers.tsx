@@ -183,7 +183,7 @@ const DatedTimeSpans: React.FC<{
                 : `${Math.floor(duration.asHours())}h ${duration.minutes()}m`;
             const startTime = start.format('LT');
 
-            markdown += `${tags}: ${description}\n`;
+            markdown += `${tags}\n${description}\n`;
             markdown += ` - ${durationStr} (${startTime})\n\n`;
         });
 
