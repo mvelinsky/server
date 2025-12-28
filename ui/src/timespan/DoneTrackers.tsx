@@ -171,7 +171,7 @@ const DatedTimeSpans: React.FC<{
         }
 
         markdown += `\n## Timespans\n\n`;
-        timeSpans.forEach((ts) => {
+        [...timeSpans].reverse().forEach((ts) => {
             const tags = ts.initialTags.map((t) => `${t.tag.key}:${t.value}`).join(', ');
             const description = ts.note || '';
 
