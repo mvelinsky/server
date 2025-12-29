@@ -81,6 +81,10 @@ export const CalendarPage: React.FC = () => {
     });
     const [updateTimeSpanMutation] = useMutation<UpdateTimeSpan, UpdateTimeSpanVariables>(gqlTimeSpan.UpdateTimeSpan);
     const [currentDate, setCurrentDate] = React.useState(moment());
+    const [calendarRange, setCalendarRange] = React.useState<{start: Date; end: Date}>({
+        start: moment().startOf('week').toDate(),
+        end: moment().endOf('week').toDate(),
+    });
     const [trackersCollapsed, setTrackersCollapsed] = React.useState(false);
 
     const [stopTimer] = useMutation<StopTimer, StopTimerVariables>(gqlTimeSpan.StopTimer, {
@@ -244,7 +248,7 @@ export const CalendarPage: React.FC = () => {
                     </IconButton>
                 </Box>
                 <Collapse in={!trackersCollapsed}>
-                    <DailyTrackerTable dateRange={{start: moment().startOf('week'), end: moment().endOf('week')}} />
+                    <DailyTrackerTable dateRange={{start: moment(calendarRange.start), end: moment(calendarRange.end)}} />
                 </Collapse>
             </Box>
             {usersResult.data && usersResult.data.currentUser && usersResult.data.currentUser.admin && (
@@ -279,6 +283,9 @@ export const CalendarPage: React.FC = () => {
                     )}
                 </Box>
             )}
+            <div>
+                {calendarRange.start.toString()} - {calendarRange.end.toString()}
+            </div>
             <FullCalendarStyling>
                 <FullCalendar
                     defaultView="timeGridWeek"
@@ -290,6 +297,11 @@ export const CalendarPage: React.FC = () => {
                             !moment(timeSpansResult.variables.end).isSame(range.end)
                         ) {
                             timeSpansResult.refetch(range);
+                        }
+                        const newStart = range.start.toDate();
+                        const newEnd = range.end.toDate();
+                        if (newStart.getTime() !== calendarRange.start.getTime() || newEnd.getTime() !== calendarRange.end.getTime()) {
+                            setCalendarRange({start: newStart, end: newEnd});
                         }
                     }}
                     views={{
