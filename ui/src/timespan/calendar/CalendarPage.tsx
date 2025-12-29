@@ -283,9 +283,6 @@ export const CalendarPage: React.FC = () => {
                     )}
                 </Box>
             )}
-            <div>
-                {calendarRange.start.toString()} - {calendarRange.end.toString()}
-            </div>
             <FullCalendarStyling>
                 <FullCalendar
                     defaultView="timeGridWeek"
