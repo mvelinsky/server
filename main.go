@@ -15,6 +15,7 @@ import (
 	"github.com/traggo/server/graphql"
 	"github.com/traggo/server/logger"
 	"github.com/traggo/server/model"
+	"github.com/traggo/server/report"
 	"github.com/traggo/server/server"
 	"github.com/traggo/server/ui"
 	"github.com/traggo/server/user/password"
@@ -70,6 +71,11 @@ func initRouter(db *gorm.DB, conf config.Config, version model.Version) *mux.Rou
 		graphql.NewDirective())
 
 	router := mux.NewRouter()
+
+	// Public API endpoints (no authentication required)
+	router.HandleFunc("/api/report/{date}", report.Handler(db, conf.APIKey))
+
+	// Authenticated routes
 	router.Use(auth.Middleware(db))
 	router.HandleFunc("/graphql", gqlHandler)
 	ui.Register(router)
