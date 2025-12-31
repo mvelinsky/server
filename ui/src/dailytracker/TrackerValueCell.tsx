@@ -80,7 +80,7 @@ export const TrackerValueCell: React.FC<TrackerValueCellProps> = ({tracker, valu
                 type="number"
                 value={numValue !== undefined && numValue !== null ? numValue : ''}
                 onChange={(e) => {
-                    const val = e.target.value ? parseFloat(e.target.value) : 0;
+                    const val = e.target.value !== '' ? parseFloat(e.target.value) : 0;
                     setValue({
                         variables: {
                             trackerId: tracker.id,
