@@ -52,6 +52,17 @@ export const TrackerValueCell: React.FC<TrackerValueCellProps> = ({tracker, valu
     const [dialogOpen, setDialogOpen] = React.useState(false);
     const [textValue, setTextValue] = React.useState((value && value.textValue) || '');
 
+    // Number input local state - always declared, only used for Number type
+    const numValue = value && value.numberValue;
+    const [localValue, setLocalValue] = React.useState(
+        numValue !== undefined && numValue !== null ? String(numValue) : ''
+    );
+
+    // Update local state when the value prop changes (e.g., from cache update)
+    React.useEffect(() => {
+        setLocalValue(numValue !== undefined && numValue !== null ? String(numValue) : '');
+    }, [numValue]);
+
     // Boolean: Checkbox for quick toggle
     if (tracker.type === 'Boolean') {
         const checked = (value && value.boolValue) || false;
@@ -74,20 +85,41 @@ export const TrackerValueCell: React.FC<TrackerValueCellProps> = ({tracker, valu
 
     // Number: Inline TextField
     if (tracker.type === 'Number') {
-        const numValue = value && value.numberValue;
         return (
             <TextField
-                type="number"
-                value={numValue !== undefined && numValue !== null ? numValue : ''}
+                type="text"
+                inputProps={{inputMode: 'numeric', pattern: '[0-9]*'}}
+                value={localValue}
                 onChange={(e) => {
-                    const val = e.target.value !== '' ? parseFloat(e.target.value) : 0;
-                    setValue({
-                        variables: {
-                            trackerId: tracker.id,
-                            date,
-                            numberValue: val,
-                        },
-                    }).catch(() => {});
+                    const inputVal = e.target.value;
+                    setLocalValue(inputVal);
+                }}
+                onBlur={() => {
+                    if (localValue === '') {
+                        setValue({
+                            variables: {
+                                trackerId: tracker.id,
+                                date,
+                                numberValue: null,
+                            },
+                        }).catch(() => {});
+                    } else {
+                        const parsed = parseFloat(localValue);
+                        if (!isNaN(parsed)) {
+                            setValue({
+                                variables: {
+                                    trackerId: tracker.id,
+                                    date,
+                                    numberValue: parsed,
+                                },
+                            }).catch(() => {});
+                        }
+                    }
+                }}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                        e.currentTarget.blur();
+                    }
                 }}
                 style={{width: 80}}
             />

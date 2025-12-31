@@ -106,7 +106,10 @@ func ToExternalValue(value model.DailyTrackerValue) *gqlmodel.DailyTrackerValue 
 	}
 
 	var numberValue *float64
-	if value.NumberValue != 0 {
+	// For Number type trackers, always return the value (even if 0)
+	if value.Tracker.Type == model.TypeNumber {
+		numberValue = &value.NumberValue
+	} else if value.NumberValue != 0 {
 		numberValue = &value.NumberValue
 	}
 
