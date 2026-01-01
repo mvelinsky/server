@@ -225,6 +225,9 @@ const useStyle = makeStyles((theme) => {
             '& .fc .__start:hover': {
                 background: theme.palette.primary.light,
             },
+            '& .fc .fc-content a': {
+                cursor: 'pointer',
+            },
             // tslint:disable-next-line:no-any important breaks it
         } as any,
     };

@@ -57,6 +57,37 @@ declare global {
 
 const StartTimerId = '-1';
 
+/**
+ * Checks if a time span is in the past
+ * A time span is "in the past" if:
+ * - Has end time and end < now, OR
+ * - No end time but start < now
+ */
+const isTimeSpanPast = (event: EventApi): boolean => {
+    if (!event.start) {
+        return false;
+    }
+    const now = moment();
+    const start = moment(event.start);
+    if (event.end) {
+        return moment(event.end).isBefore(now);
+    }
+    return start.isBefore(now);
+};
+
+/**
+ * Checks if a time span has the _planned:pending tag
+ */
+const isPlannedPending = (event: EventApi): boolean => {
+    if (!event.extendedProps || !event.extendedProps.ts || !event.extendedProps.ts.tags) {
+        return false;
+    }
+    return event.extendedProps.ts.tags.some(
+        (tag: {key: string; value: string}) =>
+            tag.key === '_planned' && tag.value === 'pending'
+    );
+};
+
 export const CalendarPage: React.FC = () => {
     const apollo = useApolloClient();
     const theme = useTheme();
@@ -204,11 +235,19 @@ export const CalendarPage: React.FC = () => {
         });
     };
     const onSelect: OptionsInput['select'] = (data) => {
+        const startMoment = moment(data.start);
+        const now = moment();
+
+        // Check if start time is in the future
+        const tags = startMoment.isAfter(now)
+            ? [{key: '_planned', value: 'pending'}]
+            : [];
+
         addTimeSpan({
             variables: {
-                start: moment(data.start).format(),
+                start: startMoment.format(),
                 end: moment(data.end).format(),
-                tags: [],
+                tags: tags,
                 note: '',
             },
         });
@@ -322,11 +361,34 @@ export const CalendarPage: React.FC = () => {
                     eventRender={(e) => {
                         const content = e.el.getElementsByClassName('fc-content').item(0);
                         if (content) {
-                            content.innerHTML = getElementContent(e.event, () => {
-                                stopTimer({
-                                    variables: {id: e.event.extendedProps.ts.id, end: moment().format()},
-                                });
-                            });
+                            content.innerHTML = getElementContent(
+                                e.event,
+                                () => {
+                                    stopTimer({
+                                        variables: {id: e.event.extendedProps.ts.id, end: moment().format()},
+                                    });
+                                },
+                                (id: number, status: 'succeed' | 'failed') => {
+                                    const currentTags = e.event.extendedProps.ts.tags || [];
+                                    const updatedTags = currentTags.map((tag: {key: string; value: string}) => {
+                                        if (tag.key === '_planned') {
+                                            return {key: '_planned', value: status};
+                                        }
+                                        return tag;
+                                    });
+
+                                    updateTimeSpanMutation({
+                                        variables: {
+                                            id: id,
+                                            oldStart: moment(e.event.start!).format(),
+                                            start: moment(e.event.start!).format(),
+                                            end: moment(e.event.end!).format(),
+                                            tags: updatedTags,
+                                            note: e.event.extendedProps.ts.note || '',
+                                        },
+                                    });
+                                }
+                            );
                         }
 
                         e.el.setAttribute('data-has-end', '' + (!e.event.extendedProps.ts || !!e.event.extendedProps.ts.end));
@@ -401,7 +463,11 @@ export const CalendarPage: React.FC = () => {
     );
 };
 
-const getElementContent = (event: EventApi, stop: () => void): string => {
+const getElementContent = (
+    event: EventApi,
+    stop: () => void,
+    updatePlannedStatus?: (id: number, status: 'succeed' | 'failed') => void
+): string => {
     if (!event.start || !event.end) {
         return '';
     }
@@ -435,6 +501,52 @@ const getElementContent = (event: EventApi, stop: () => void): string => {
         )}</a></div>`;
     }
 
+    // Add planned action buttons for past pending time spans
+    let plannedButtons = '';
+    if (hasEnd && isPlannedPending(event) && isTimeSpanPast(event)) {
+        const id = event.extendedProps.ts.id;
+        if (!window.__TRAGGO_CALENDAR) {
+            window.__TRAGGO_CALENDAR = {};
+        }
+
+        const succeedKey = `planned_succeed_${id}`;
+        window.__TRAGGO_CALENDAR[succeedKey] = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (updatePlannedStatus) {
+                updatePlannedStatus(id, 'succeed');
+            }
+            return false;
+        };
+
+        const failedKey = `planned_failed_${id}`;
+        window.__TRAGGO_CALENDAR[failedKey] = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (updatePlannedStatus) {
+                updatePlannedStatus(id, 'failed');
+            }
+            return false;
+        };
+
+        plannedButtons = `
+            <div style="position: absolute; bottom: 0; left: 0; right: 0; display: flex;">
+                <div style="flex: 1; background: rgba(76, 175, 80, 0.7); border-radius: 0 0 0 4px;">
+                    <a onClick="return window.__TRAGGO_CALENDAR['${succeedKey}'](event)"
+                       style="display: block; text-align: center; padding: 2px 0; font-size: 10px; font-weight: bold;">
+                        ✓
+                    </a>
+                </div>
+                <div style="flex: 1; background: rgba(244, 67, 54, 0.7); border-radius: 0 0 4px 0;">
+                    <a onClick="return window.__TRAGGO_CALENDAR['${failedKey}'](event)"
+                       style="display: block; text-align: center; padding: 2px 0; font-size: 10px; font-weight: bold;">
+                        ✗
+                    </a>
+                </div>
+            </div>
+        `;
+    }
+
     const running = hasEnd ? `<span style="float: right">${timeRunningCalendar(start, end)}</span>` : '';
     const date = `${start.format('LT')} - ${hasEnd ? end.format('LT') : 'now'} ${running}`;
 
@@ -459,26 +571,26 @@ const getElementContent = (event: EventApi, stop: () => void): string => {
 
     if (lines < 2) {
         if (hasNote) {
-            return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`;
+            return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}${plannedButtons}`;
         }
         return tagsHtml
-            ? `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`
-            : `${date}${stopButton}`;
+            ? `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}${plannedButtons}`
+            : `${date}${stopButton}${plannedButtons}`;
     }
     if (lines === 2) {
         if (hasEnd) {
             if (hasNote) {
-                return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${noteHtml}${stopButton}`;
+                return `<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${noteHtml}${stopButton}${plannedButtons}`;
             }
-            return `${date}<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}`;
+            return `${date}<span class="ellipsis-single" title="${event.title}">${tagsHtml}</span>${stopButton}${plannedButtons}`;
         } else {
-            return `<span class="ellipsis-single">${tagsHtml}</span>${stopButton}`;
+            return `<span class="ellipsis-single">${tagsHtml}</span>${stopButton}${plannedButtons}`;
         }
     }
 
     if (hasNote && lines >= 3) {
-        return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span><br/>${noteHtml}${stopButton}`;
+        return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span><br/>${noteHtml}${stopButton}${plannedButtons}`;
     }
 
-    return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span>${stopButton}`;
+    return `${date}<br/><span class="ellipsis-single">${tagsHtml}</span>${stopButton}${plannedButtons}`;
 };
